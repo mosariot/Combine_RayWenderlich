@@ -4,6 +4,8 @@ import _Concurrency
 
 var subscriptions = Set<AnyCancellable>()
 
+// MARK: - Publisher
+
 example(of: "Publisher") {
     let myNotification = Notification.Name("MyNotification")
     let publisher = NotificationCenter.default
@@ -15,6 +17,8 @@ example(of: "Publisher") {
     center.post(name: myNotification, object: nil)
     center.removeObserver(observer)
 }
+
+// MARK: - Subscriber
 
 example(of: "Subscriber") {
     let myNotification = Notification.Name("MyNotofocation")
@@ -74,7 +78,120 @@ example(of: "assign(to:)") {
         .assign(to: &object.$value)
 }
 
+example(of: "Custom Subscriber") {
+    let publisher = ["A", "B", "C", "D", "E", "F"].publisher
+    
+    final class IntSubscriber: Subscriber {
+        typealias Input = String
+        typealias Failure = Never
+        
+        func receive(subscription: Subscription) {
+            subscription.request(.max(3))
+        }
+        
+        func receive(_ input: String) -> Subscribers.Demand {
+            print("Received value", input)
+            return .none
+        }
+        
+        func receive(completion: Subscribers.Completion<Never>) {
+            print("Received completion", completion)
+        }
+    }
+    
+    let subscriber = IntSubscriber()
+    publisher.subscribe(subscriber)
+}
 
+// MARK: - Future
+
+//example(of: "Future") {
+//    func futureIncrement(integer: Int, afterDelay delay: TimeInterval) -> Future<Int, Never> {
+//        Future<Int, Never> { promise in
+//            print("Original")
+//            DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+//                promise(.success(integer + 1))
+//            }
+//        }
+//    }
+//    let future = futureIncrement(integer: 1, afterDelay: 3)
+//    future
+//        .sink(receiveCompletion: { print($0) }, receiveValue: { print($0) })
+//        .store(in: &subscriptions)
+//    future
+//        .sink(receiveCompletion: { print("Second", $0) }, receiveValue: { print("Second", $0) })
+//        .store(in: &subscriptions)
+//}
+
+// MARK: - Subject
+
+example(of: "PassthroughSubject") {
+    enum MyError: Error {
+        case test
+    }
+    
+    final class StringSubscriber: Subscriber {
+        typealias Input = String
+        typealias Failure = MyError
+        
+        func receive(subscription: Subscription) {
+            subscription.request(.max(2))
+        }
+        
+        func receive(_ input: String) -> Subscribers.Demand {
+            print("Received value", input)
+            return input == "World" ? .max(1) : .none
+        }
+        
+        func receive(completion: Subscribers.Completion<MyError>) {
+            print("Received completion", completion)
+        }
+    }
+    
+    let subscriber = StringSubscriber()
+    
+    let subject = PassthroughSubject<String, MyError>()
+    subject.subscribe(subscriber)
+    let subscription = subject
+        .sink { completion in
+            print("Received completion (sink)", completion)
+        } receiveValue: { value in
+            print("Received value (sink)", value)
+        }
+    
+    subject.send("Hello")
+    subject.send("World")
+    
+    subscription.cancel()
+    subject.send("Still there?")
+    
+    subject.send(completion: .failure(MyError.test))
+    subject.send(completion: .finished)
+    subject.send("How about another one?")
+}
+
+example(of: "CurrentValueSubject") {
+    var subscriptions = Set<AnyCancellable>()
+    let subject = CurrentValueSubject<Int, Never>(0)
+    subject
+        .print()
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+    
+    subject.send(1)
+    subject.send(2)
+    print(subject.value)
+    
+    subject.value = 3
+    print(subject.value)
+    
+    subject
+        .print()
+        .sink(receiveValue: { print("Second subscription:", $0) })
+        .store(in: &subscriptions)
+    
+    subject.send(completion: .finished)
+}
 
 /// Copyright (c) 2021 Razeware LLC
 ///

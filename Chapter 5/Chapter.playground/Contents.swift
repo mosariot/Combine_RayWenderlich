@@ -3,7 +3,99 @@ import Combine
 
 var subscriptions = Set<AnyCancellable>()
 
+// MARK: - Prepending
 
+example(of: "prepend(Output...)") {
+    let publisher = [3, 4].publisher
+    
+    publisher
+        .prepend(1, 2)
+        .prepend(-1, 0)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
+
+example(of: "prepend(Sequence)") {
+    let publisher = [5, 6, 7].publisher
+    
+    publisher
+        .prepend([3, 4])
+        .prepend(Set(1...2))
+        .prepend(stride(from: 6, to: 11, by: 2))
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
+
+example(of: "prepend(Publisher)") {
+    let publisher1 = [3, 4].publisher
+    let publisher2 = [1, 2].publisher
+    
+    publisher1
+        .prepend(publisher2)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
+
+example(of: "prepend(Publisher) #2") {
+    let publisher1 = [3, 4].publisher
+    let publisher2 = PassthroughSubject<Int, Never>()
+    
+    publisher1
+        .prepend(publisher2)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+    
+    publisher2.send(1)
+    publisher2.send(2)
+    publisher2.send(completion: .finished)
+}
+
+// MARK: - Appending
+
+example(of: "append(Output...)") {
+    let publisher = [1].publisher
+    
+    publisher
+        .prepend(2, 3)
+        .prepend(4)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
+
+example(of: "append(Output...) #2") {
+    let publisher = PassthroughSubject<Int, Never>()
+    
+    publisher
+        .prepend(3, 4)
+        .prepend(5)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+    
+    publisher.send(1)
+    publisher.send(2)
+    publisher.send(completion: .finished)
+}
+
+example(of: "append(Sequence)") {
+    let publisher = [1, 2, 3].publisher
+    
+    publisher
+        .append([4, 5])
+        .append(Set([6, 7]))
+        .append(stride(from: 8, to: 11, by: 2))
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
+
+example(of: "append(Publisher)") {
+    let publisher1 = [1, 2].publisher
+    let publisher2 = [3, 4].publisher
+    
+    publisher1
+        .append(publisher2)
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
 
 // Copyright (c) 2021 Razeware LLC
 //

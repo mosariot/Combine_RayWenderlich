@@ -2,8 +2,27 @@ import Combine
 import SwiftUI
 import PlaygroundSupport
 
-<# Add your code here #>
+enum TimeoutError: Error {
+    case timeout
+}
 
+let subject = PassthroughSubject<Void, TimeoutError>()
+
+let timeOutSubject = subject
+    .timeout(.seconds(5), scheduler: DispatchQueue.main, customError: { .timeout })
+
+let timeline = TimelineView(title: "Button taps")
+
+let view = VStack(spacing: 100) {
+    Button("Press me within 5 seconds") {
+        subject.send()
+    }
+    timeline
+}
+
+PlaygroundPage.current.liveView = UIHostingController(rootView: view.frame(width: 375, height: 600))
+
+timeOutSubject.displayEvents(in: timeline)
 //: [Next](@next)
 /*:
  Copyright (c) 2021 Razeware LLC

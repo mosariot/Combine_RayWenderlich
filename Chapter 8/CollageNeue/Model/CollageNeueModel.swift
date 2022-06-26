@@ -28,29 +28,65 @@
 
 import UIKit
 import Photos
+import Combine
 
 class CollageNeueModel: ObservableObject {
   static let collageSize = CGSize(width: UIScreen.main.bounds.width, height: 200)
   
-  // MARK: - Collage
+  private var subscriptions = Set<AnyCancellable>()
   
+  private let images = CurrentValueSubject<[UIImage], Never>([])
+  @Published var imagePreview: UIImage?
+  let updateUISubject = PassthroughSubject<Int, Never>()
+  
+  private(set) var selectedPhotoSubject = PassthroughSubject<UIImage, Never>()
+  
+  // MARK: - Collage
   private(set) var lastSavedPhotoID = ""
   private(set) var lastErrorMessage = ""
 
   func bindMainView() {
-    
+    images
+      .handleEvents(receiveOutput: { [weak self] photos in
+        self?.updateUISubject.send(photos.count)
+      })
+      .map { photos in
+        UIImage.collage(images: photos, size: Self.collageSize)
+      }
+      .assign(to: &$imagePreview)
   }
 
   func add() {
-    
+    selectedPhotoSubject = PassthroughSubject<UIImage, Never>()
+    let newPhotos = selectedPhotoSubject
+      .prefix(while: { [unowned self] _ in
+        self.images.value.count < 6
+      })
+      .share()
+    newPhotos
+      .map { [unowned self] newImage in
+        return self.images.value + [newImage]
+      }
+      .assign(to: \.value, on: images)
+      .store(in: &subscriptions)
   }
 
   func clear() {
-    
+    images.send([])
   }
 
   func save() {
-    
+    guard let image = imagePreview else { return }
+    PhotoWriter.save(image)
+      .sink { [unowned self] completion in
+        if case .failure(let error) = completion {
+          lastErrorMessage = error.localizedDescription
+        }
+        clear()
+      } receiveValue: { [unowned self] id in
+        lastSavedPhotoID = id
+      }
+      .store(in: &subscriptions)
   }
   
   // MARK: -  Displaying photos picker
@@ -84,14 +120,9 @@ class CollageNeueModel: ObservableObject {
       contentMode: .aspectFill,
       options: nil
     ) { [weak self] image, info in
-      guard self != nil, image != nil, let info else { return }
-      
-      if let isThumbnail = info[PHImageResultIsDegradedKey as String] as? Bool, isThumbnail {
-        // Skip the thumbnail version of the asset
-        return
-      }
-      
-      // Send the selected image
+      guard let self, let image, let info else { return }
+      if let isThumbnail = info[PHImageResultIsDegradedKey as String] as? Bool, isThumbnail { return }
+      self.selectedPhotoSubject.send(image)
     }
   }
 }

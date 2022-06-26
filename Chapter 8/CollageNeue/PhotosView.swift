@@ -76,14 +76,17 @@ struct PhotosView: View {
       Text("You can grant access to Collage Neue from the Settings app")
     })
     .onAppear {
-      // Check for Photos access authorization and reload the list if authorized.
-      PHPhotoLibrary.fetchAuthorizationStatus { status in
-        if status {
-          DispatchQueue.main.async {
-            self.photos = model.loadPhotos()
+      PHPhotoLibrary
+        .isAuthorized.sink { status in
+          if status {
+            DispatchQueue.main.async {
+              self.photos = model.loadPhotos()
+            }
+          } else {
+            isDisplayingError = true
           }
         }
-      }
+        .store(in: &subscriptions)
       
       model.bindPhotoPicker()
     }

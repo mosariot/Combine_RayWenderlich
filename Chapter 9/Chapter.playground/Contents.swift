@@ -17,6 +17,7 @@ example(of: "Networking") {
         } receiveValue: { data, response in
             print("Retrieved data of size \(data.count), response = \(response)")
         }
+        .store(in: &subscriptions)
 }
 
 example(of: "Networking with decoding") {
@@ -33,6 +34,7 @@ example(of: "Networking with decoding") {
         } receiveValue: { object in
             print("Retrieved object \(object)")
         }
+        .store(in: &subscriptions)
 }
 
 example(of: "Connecting multiple subscribers to the networking publiher") {
@@ -53,6 +55,7 @@ example(of: "Connecting multiple subscribers to the networking publiher") {
         } receiveValue: { object in
             print("Sink1 Retrieved object \(object)")
         }
+        .store(in: &subscriptions)
     
     let _ = publisher
         .sink { completion in
@@ -62,7 +65,9 @@ example(of: "Connecting multiple subscribers to the networking publiher") {
         } receiveValue: { object in
             print("Sink2 Retrieved object \(object)")
         }
+        .store(in: &subscriptions)
     
     let _ = publisher
         .connect()
+        .store(in: &subscriptions)
 }

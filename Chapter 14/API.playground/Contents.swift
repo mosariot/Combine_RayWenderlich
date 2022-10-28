@@ -1,3 +1,54 @@
+import Foundation
+import PlaygroundSupport
+import Combine
+
+struct API {
+  /// API Errors.
+  enum Error: LocalizedError {
+    case addressUnreachable(URL)
+    case invalidResponse
+    
+    var errorDescription: String? {
+      switch self {
+      case .invalidResponse: return "The server responded with garbage."
+      case .addressUnreachable(let url): return "\(url.absoluteString) is unreachable."
+      }
+    }
+  }
+  
+  /// API endpoints.
+  enum EndPoint {
+    static let baseURL = URL(string: "https://hacker-news.firebaseio.com/v0/")!
+    
+    case stories
+    case story(Int)
+    
+    var url: URL {
+      switch self {
+      case .stories:
+        return EndPoint.baseURL.appendingPathComponent("newstories.json")
+      case .story(let id):
+        return EndPoint.baseURL.appendingPathComponent("item/\(id).json")
+      }
+    }
+  }
+
+  /// Maximum number of stories to fetch (reduce for lower API strain during development).
+  var maxStories = 10
+
+  /// A shared JSON decoder to use in calls.
+  private let decoder = JSONDecoder()
+  
+  // <#Add your API code here#>
+  
+}
+
+// <#Call the API here#>
+
+
+// Run indefinitely.
+PlaygroundPage.current.needsIndefiniteExecution = true
+
 /// Copyright (c) 2021 Razeware LLC
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,65 +76,3 @@
 /// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
-
-import SwiftUI
-
-struct ReaderView: View {
-  var model: ReaderViewModel
-  var presentingSettingsSheet = false
-
-  var currentDate = Date()
-  
-  init(model: ReaderViewModel) {
-    self.model = model
-  }
-  
-  var body: some View {
-    let filter = "Showing all stories"
-    
-    return NavigationView {
-      List {
-        Section(header: Text(filter).padding(.leading, -10)) {
-          ForEach(self.model.stories) { story in
-            VStack(alignment: .leading, spacing: 10) {
-              TimeBadge(time: story.time)
-              
-              Text(story.title)
-                .frame(minHeight: 0, maxHeight: 100)
-                .font(.title)
-              
-              PostedBy(time: story.time, user: story.by, currentDate: self.currentDate)
-              
-              Button(story.url) {
-                print(story)
-              }
-              .font(.subheadline)
-              .foregroundColor(Color.blue)
-              .padding(.top, 6)
-            }
-            .padding()
-          }
-          // Add timer here
-        }.padding()
-      }
-      .listStyle(PlainListStyle())
-      // Present the Settings sheet here
-      // Display errors here
-      .navigationBarTitle(Text("\(self.model.stories.count) Stories"))
-      .navigationBarItems(trailing:
-        Button("Settings") {
-          // Set presentingSettingsSheet to true here
-          
-        }
-      )
-    }
-  }
-}
-
-#if DEBUG
-struct ReaderView_Previews: PreviewProvider {
-  static var previews: some View {
-    ReaderView(model: ReaderViewModel())
-  }
-}
-#endif

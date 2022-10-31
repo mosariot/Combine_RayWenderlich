@@ -71,8 +71,8 @@ struct API {
             .decode(type: [Int].self, decoder: decoder)
             .mapError { error -> API.Error in
                 switch error {
-                case is URLError: Error.addressUnreachable(EndPoint.stories.url)
-                default: Error.invalidResponse
+                case is URLError: return Error.addressUnreachable(EndPoint.stories.url)
+                default: return Error.invalidResponse
                 }
             }
             .filter { !$0.isEmpty }
@@ -84,6 +84,7 @@ struct API {
             }
             .map { $0.sorted() }
             .eraseToAnyPublisher()
+    }
 }
 
 // <#Call the API here#>

@@ -27,12 +27,17 @@
 /// THE SOFTWARE.
 
 import SwiftUI
+import Combine
 
 struct ReaderView: View {
-  var model: ReaderViewModel
-  var presentingSettingsSheet = false
+  @ObservedObject var model: ReaderViewModel
+  @State var presentingSettingsSheet = false
 
-  var currentDate = Date()
+  @State var currentDate = Date()
+  
+  private let timer = Timer.publish(every: 10, on: .main, in: .common)
+    .autoconnect()
+    .eraseToAnyPublisher()
   
   init(model: ReaderViewModel) {
     self.model = model
@@ -63,17 +68,22 @@ struct ReaderView: View {
             }
             .padding()
           }
-          // Add timer here
+          .onReceive(timer) {
+            currentDate = $0
+          }
         }.padding()
       }
       .listStyle(PlainListStyle())
-      // Present the Settings sheet here
-      // Display errors here
+      .sheet(isPresented: $presentingSettingsSheet) {
+        SettingsView()
+      }
+      .alert(item: $model.error) { error in
+        Alert(title: Text("Network error"), message: Text(error.localizedDescription), dismissButton: .cancel())
+      }
       .navigationBarTitle(Text("\(self.model.stories.count) Stories"))
       .navigationBarItems(trailing:
         Button("Settings") {
-          // Set presentingSettingsSheet to true here
-          
+          self.presentingSettingsSheet = true          
         }
       )
     }

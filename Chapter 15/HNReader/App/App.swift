@@ -36,6 +36,9 @@ struct HNReader: App {
   var body: some Scene {
     WindowGroup {
       ReaderView(model: viewModel)
+        .onAppear {
+          viewModel.fetchStories()
+        }
     }
   }
 }

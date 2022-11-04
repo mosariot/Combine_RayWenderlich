@@ -34,7 +34,6 @@ struct ReaderView: View {
   @EnvironmentObject var settings: Settings
   @ObservedObject var model: ReaderViewModel
   @State var presentingSettingsSheet = false
-  
   @State var currentDate = Date()
   
   private let timer = Timer.publish(every: 10, on: .main, in: .common)
@@ -46,11 +45,9 @@ struct ReaderView: View {
   }
   
   var body: some View {
-    let filter = "Showing all stories"
-    
-    return NavigationView {
+    NavigationView {
       List {
-        Section(header: Text(filter).padding(.leading, -10)) {
+        Section(header: Text(model.filter.isEmpty ? "Showing all stories" : model.filter.joined(separator: ", ")).padding(.leading, -10)) {
           ForEach(self.model.stories) { story in
             VStack(alignment: .leading, spacing: 10) {
               TimeBadge(time: story.time)

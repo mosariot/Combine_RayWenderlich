@@ -30,9 +30,11 @@ import SwiftUI
 import Combine
 
 struct ReaderView: View {
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
+  @EnvironmentObject var settings: Settings
   @ObservedObject var model: ReaderViewModel
   @State var presentingSettingsSheet = false
-
+  
   @State var currentDate = Date()
   
   private let timer = Timer.publish(every: 10, on: .main, in: .common)
@@ -63,7 +65,7 @@ struct ReaderView: View {
                 print(story)
               }
               .font(.subheadline)
-              .foregroundColor(Color.blue)
+              .foregroundColor(colorScheme == .light ? .blue : .orange)
               .padding(.top, 6)
             }
             .padding()

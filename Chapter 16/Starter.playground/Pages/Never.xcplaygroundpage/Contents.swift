@@ -3,7 +3,11 @@ import Combine
 
 var subscriptions = Set<AnyCancellable>()
 //: ## Never
-<#Add your code here#>
+example(of: "Never sink") {
+    Just("Hello")
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+}
 //: [Next](@next)
 
 /// Copyright (c) 2021 Razeware LLC
